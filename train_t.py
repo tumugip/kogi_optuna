@@ -129,32 +129,23 @@ def objective(trial):
                                     hparams.emb_size, hparams.nhead,
                                     vocab_size+4, vocab_size+4, hparams.fnn_hid_dim)
 
-#   print('hparams:wwwwwwwwwwwwwwwwwwww')
+
 
   loss_fn = torch.nn.CrossEntropyLoss(ignore_index=PAD_IDX)
   train_dataset, valid_dataset = load_TrainTestDataSet(
      hparams, transform=transform)
-#   print(train_dataset)
-#   print('888888888888888')
-#   print(valid_dataset)
+
   for epoch in range(1, NUM_EPOCHS+1):
       start_time = timer()
-    #   print('xxxxxxxxxxxxxxxxx')
-    #   print(train_dataset)
-    #   print('666666666666')
-    #   print(valid_dataset)
     #   optimizer = torch.optim.Adam(
     #     model.parameters(), lr=study.best_params['adam_lr'], betas=(0.9, 0.98), eps=1e-9
     #     )
       train_loss, optimizer = object_train(trial,train_dataset, model, BATCH_SIZE, loss_fn)
     #   train_loss, optimizer = object_train(model, trial, BATCH_SIZE)#modelに変更する　ここ、渡してるものが足りないよ！！！　trial,train_iter, model, batch_size, loss_fn, optimizer
       end_time = timer()
-    #   print('3333333333333333333')
-    #   print(BATCH_SIZE)
       val_loss = evaluate(valid_dataset, model, BATCH_SIZE, loss_fn)#modelに変更する  val_iter, model, batch_size, loss_fn
     #   val_loss = evaluate(model, BATCH_SIZE)#modelに変更する  val_iter, model, batch_size, loss_fn
       epoch_time=end_time-start_time
-    #   print('222222222222222222222222')
       
       #追加
       TRAINLOSS.append(train_loss)
@@ -238,7 +229,6 @@ def _main():
         if p.requires_grad:
             params += p.numel()
     print('Parameter:', params)
-    print('222222222222222222222222222222222222')
 
 
 
@@ -247,15 +237,13 @@ def _main():
 
     # 損失関数の定義 (クロスエントロピー)
     loss_fn = torch.nn.CrossEntropyLoss(ignore_index=PAD_IDX)
-    print(train_dataset)
-    print('PPPPPPPPPPPPPPPPPPPPPPPPPPPPPP')
 
     # オプティマイザの定義 (Adam)
     optimizer = get_optimizer(hparams, model)
 
     study = optuna.create_study(direction='maximize')
     study.optimize(objective, n_trials=20, timeout=8000)
-    print('77777777777777777777777777777777777')
+
 
 
     # パラメータの定義
@@ -269,7 +257,6 @@ def _main():
         model.parameters(), lr=study.best_params['adam_lr'], betas=(0.9, 0.98), eps=1e-9
     )
 
-    print('000000000000000000000000000000000000')
 
     train_list = []
     valid_list = []

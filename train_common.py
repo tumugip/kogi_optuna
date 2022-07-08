@@ -85,7 +85,7 @@ def _loading_dataset(hparams, files=None, transform=transform_nop):
                         d = line.rstrip('\n')
                         _append_data(
                             dataset, d, d, transform, c)
-    # logging.info(f'loaded {len(dataset)} dataset')
+    logging.info(f'loaded {len(dataset)} dataset')
     if hparams.testing:
         return dataset[:20]
     return dataset
@@ -215,8 +215,8 @@ def _setup_logger(hparams):
     )
     # ルートロガーの設定
     logging.basicConfig(level=NOTSET, handlers=[stream_handler, file_handler])
-    # logging.info(f'PyTorch: {torch.__version__}')
-    # logging.info(f'hparams: {hparams}')
+    logging.info(f'PyTorch: {torch.__version__}')
+    logging.info(f'hparams: {hparams}')
 
 
 def parse_hparams(setups={}, Tokenizer=None):
@@ -265,8 +265,8 @@ def parse_hparams(setups={}, Tokenizer=None):
         if len(hparams.additional_tokens) > 0:
             hparams.tokenizer.add_tokens(hparams.additional_tokens)
             hparams.vocab_size += len(hparams.additional_tokens)
-        # logging.info(
-        #     f'vocab_size: {hparams.tokenizer.vocab_size} {hparams.vocab_size}')
+        logging.info(
+            f'vocab_size: {hparams.tokenizer.vocab_size} {hparams.vocab_size}')
 
     _set_seed(hparams.seed)
     return hparams
@@ -274,7 +274,7 @@ def parse_hparams(setups={}, Tokenizer=None):
 
 def _main():
     hparams = parse_hparams()
-    # print(hparams)
+    print(hparams)
     load_TrainTestDataSet(hparams)
 
 

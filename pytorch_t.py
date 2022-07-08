@@ -12,7 +12,6 @@ from torch.nn import (TransformerEncoder, TransformerDecoder,
 import math
 
 
-#from transformers import AutoTokenizer
 
 # tokenizer
 
@@ -207,16 +206,13 @@ def train(train_iter, model, batch_size, loss_fn, optimizer):
 
 
 def evaluate(val_iter, model, batch_size, loss_fn):
-    # print('PPPPPPPPPPPPPPPPPPP')
     model.eval()
     losses = 0
-    # print('QQQQQQQQQQQQQQQQQQQQQQ')
 
     val_dataloader = DataLoader(
         val_iter, batch_size=batch_size, shuffle=True,
         collate_fn=collate_fn, num_workers=2)
 
-    # print('YYYYYYYYYYYYYYYYYYYYYY')
 
     for src, tgt in val_dataloader:
         src = src.to(DEVICE)
