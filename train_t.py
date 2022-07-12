@@ -245,6 +245,10 @@ def _main():
     study.optimize(objective, n_trials=20, timeout=8000)
 
 
+    logging.info('result_optuna')
+    logging.info(study.best_params)
+    logging.info(study.best_trial)
+    logging.info(study.trials)
 
     # パラメータの定義
     BATCH_SIZE = study.best_params['batch_size']
