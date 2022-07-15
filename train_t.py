@@ -14,7 +14,8 @@ from pytorch_t import (
     Seq2SeqTransformer,
     get_transform, train, evaluate,
     save_model, load_pretrained, load_nmt,
-    PAD_IDX, DEVICE,collate_fn,create_mask
+    PAD_IDX, DEVICE,
+    object_train,get_batch
 )
 
 # from morichan
@@ -56,57 +57,49 @@ def get_optimizer_adamw(hparams, model):
 
 
 
-#optuna
-def get_batch(trial):
-  batch_size = trial.suggest_int("batch_size", 32, 1024)
-  return batch_size
 
-def get_optimizers(trial, model):
 
-  adam_lr=trial.suggest_loguniform("adam_lr", 2e-5, 2e-4)
-  
-  optimizer = torch.optim.Adam(
-    model.parameters(),
-    # transformer.parameters(),
-    lr=adam_lr,
-    betas=(0.9, 0.98), eps=1e-9
-  )
-  return optimizer
 
-def object_train(trial,train_iter, model, batch_size, loss_fn): #変更
-    optimizer = get_optimizers(trial,model) #変更
-    model.train()
-    losses = 0
 
-    # 学習データ
-    #collate_fn = string_collate(hparams)
-    train_dataloader = DataLoader(
-        train_iter, batch_size=batch_size, shuffle=True,
-        collate_fn=collate_fn, num_workers=2)
 
-    for src, tgt in train_dataloader:
-        src = src.to(DEVICE)
-        tgt = tgt.to(DEVICE)
 
-        tgt_input = tgt[:-1, :]
 
-        src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = create_mask(
-            src, tgt_input)
+setup = dict(
+    model_name_or_path='megagonlabs/t5-base-japanese-web',
+    tokenizer_name_or_path='megagonlabs/t5-base-japanese-web',
+    additional_tokens='<nl> <tab> <b> </b> <e0> <e1> <e2> <e3>',
+    seed=42,
+    encoding='utf_8',
+    column=0, target_column=1,
+    kfold=5,  # cross validation
+    max_length=80,
+    target_max_length=80,
+    # training
+    max_epochs=30,
+    num_workers=2,  # os.cpu_count(),
+    learning_rate=3e-4,
+    weight_decay=0.0,
+    adam_epsilon=1e-8,
+    # learning_rate=0.0001,
+    # adam_epsilon=1e-9,
+    # weight_decay=0
+    # Transformer
+    emb_size=512,  # BERT の次元に揃えれば良いよ
+    nhead=8,
+    fnn_hid_dim=512,  # 変える
+    batch_size=8,
+    num_encoder_layers=6,
+    num_decoder_layers=6,
+)
 
-        logits = model(src, tgt_input, src_mask, tgt_mask,
-                       src_padding_mask, tgt_padding_mask, src_padding_mask)
 
-        optimizer.zero_grad()
 
-        tgt_out = tgt[1:, :]
-        loss = loss_fn(
-            logits.reshape(-1, logits.shape[-1]), tgt_out.reshape(-1))
-        loss.backward()
+NUM_EPOCHS = 60
 
-        optimizer.step()
-        losses += loss.item()
-
-    return losses / len(train_dataloader) ,optimizer #変更
+#追加
+TRAINLOSS=[]
+VALLOSS=[]
+EPOCHTIME=[]
 
 
 
@@ -154,50 +147,6 @@ def objective(trial):
 
       print((f"Epoch: {epoch}, Train loss: {train_loss:.3f}, Val loss: {val_loss:.3f}, "f"Epoch time = {(end_time - start_time):.3f}s"))
       return val_loss
-
-
-
-
-
-
-
-
-setup = dict(
-    model_name_or_path='megagonlabs/t5-base-japanese-web',
-    tokenizer_name_or_path='megagonlabs/t5-base-japanese-web',
-    additional_tokens='<nl> <tab> <b> </b> <e0> <e1> <e2> <e3>',
-    seed=42,
-    encoding='utf_8',
-    column=0, target_column=1,
-    kfold=5,  # cross validation
-    max_length=80,
-    target_max_length=80,
-    # training
-    max_epochs=30,
-    num_workers=2,  # os.cpu_count(),
-    learning_rate=3e-4,
-    weight_decay=0.0,
-    adam_epsilon=1e-8,
-    # learning_rate=0.0001,
-    # adam_epsilon=1e-9,
-    # weight_decay=0
-    # Transformer
-    emb_size=512,  # BERT の次元に揃えれば良いよ
-    nhead=8,
-    fnn_hid_dim=512,  # 変える
-    batch_size=8,
-    num_encoder_layers=6,
-    num_decoder_layers=6,
-)
-
-
-
-NUM_EPOCHS = 60
-
-#追加
-TRAINLOSS=[]
-VALLOSS=[]
-EPOCHTIME=[]
 
 
 def _main():

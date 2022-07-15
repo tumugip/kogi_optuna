@@ -13,6 +13,7 @@ import math
 
 
 
+
 # tokenizer
 
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -201,6 +202,59 @@ def train(train_iter, model, batch_size, loss_fn, optimizer):
 
 
 
+#optuna
+def get_batch(trial):
+  batch_size = trial.suggest_int("batch_size", 32, 1024)
+  return batch_size
+
+def get_optimizers(trial, model):
+
+  adam_lr=trial.suggest_loguniform("adam_lr", 2e-5, 2e-4)
+  
+  optimizer = torch.optim.Adam(
+    model.parameters(),
+    # transformer.parameters(),
+    lr=adam_lr,
+    betas=(0.9, 0.98), eps=1e-9
+  )
+  return optimizer
+
+
+
+def object_train(trial,train_iter, model, batch_size, loss_fn): #変更
+    optimizer = get_optimizers(trial,model) #変更
+    model.train()
+    losses = 0
+
+    # 学習データ
+    #collate_fn = string_collate(hparams)
+    train_dataloader = DataLoader(
+        train_iter, batch_size=batch_size, shuffle=True,
+        collate_fn=collate_fn, num_workers=2)
+
+    for src, tgt in train_dataloader:
+        src = src.to(DEVICE)
+        tgt = tgt.to(DEVICE)
+
+        tgt_input = tgt[:-1, :]
+
+        src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = create_mask(
+            src, tgt_input)
+
+        logits = model(src, tgt_input, src_mask, tgt_mask,
+                       src_padding_mask, tgt_padding_mask, src_padding_mask)
+
+        optimizer.zero_grad()
+
+        tgt_out = tgt[1:, :]
+        loss = loss_fn(
+            logits.reshape(-1, logits.shape[-1]), tgt_out.reshape(-1))
+        loss.backward()
+
+        optimizer.step()
+        losses += loss.item()
+
+    return losses / len(train_dataloader) ,optimizer #変更
 
 
 
