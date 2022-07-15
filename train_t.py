@@ -191,7 +191,7 @@ def _main():
     optimizer = get_optimizer(hparams, model)
 
     study = optuna.create_study(direction='maximize')
-    study.optimize(objective, n_trials=20, timeout=8000)
+    study.optimize(objective, n_trials=2, timeout=400,gc_after_trial=True)
 
 
     logging.info('result_optuna')
